@@ -738,3 +738,258 @@ body {
     transform: translateX(-50%);
   }
 }
+
+/* Questionnaire (Likert) */
+.questionnaire-card {
+  max-width: 720px;
+  margin: 0 auto;
+}
+
+.likert-stack {
+  display: flex;
+  flex-direction: column;
+  gap: 1.25rem;
+  margin-bottom: 1.75rem;
+}
+
+.likert-row {
+  background: var(--bg);
+  border: 2px solid var(--border);
+  border-radius: var(--radius-sm);
+  padding: 1.15rem 1.25rem;
+  transition: border-color 0.2s, box-shadow 0.2s;
+}
+
+.likert-row.answered {
+  border-color: var(--primary-light);
+  box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.12);
+}
+
+.likert-info {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  margin-bottom: 0.85rem;
+  flex-wrap: wrap;
+}
+
+.likert-code {
+  font-weight: 800;
+  font-size: 1rem;
+  color: var(--primary);
+  min-width: 28px;
+}
+
+.likert-name {
+  font-weight: 600;
+  font-size: 0.95rem;
+}
+
+.likert-desc {
+  font-size: 0.8rem;
+  color: var(--text-muted);
+  margin-top: 0.1rem;
+}
+
+.likert-scale {
+  display: flex;
+  gap: 0.5rem;
+  margin-left: auto;
+}
+
+.likert-option {
+  cursor: pointer;
+}
+
+.likert-option input[type="radio"] {
+  display: none;
+}
+
+.likert-bubble {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 42px;
+  height: 42px;
+  border-radius: 50%;
+  border: 2px solid var(--border);
+  background: var(--bg-card);
+  font-weight: 700;
+  font-size: 1rem;
+  color: var(--text-muted);
+  transition: all 0.2s;
+}
+
+.likert-option input:checked + .likert-bubble {
+  background: var(--primary);
+  border-color: var(--primary);
+  color: #fff;
+  transform: scale(1.1);
+}
+
+.legend {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 1rem;
+  margin-bottom: 1.5rem;
+  padding: 0.75rem 0;
+  border-top: 1px solid var(--border);
+  border-bottom: 1px solid var(--border);
+}
+
+.legend-item {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+  font-size: 0.82rem;
+  color: var(--text-muted);
+}
+
+.dot {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 26px;
+  height: 26px;
+  border-radius: 50%;
+  font-weight: 700;
+  font-size: 0.75rem;
+  color: #fff;
+}
+
+.dot-1 { background: #ef4444; }
+.dot-2 { background: #f97316; }
+.dot-3 { background: #eab308; }
+.dot-4 { background: #22c55e; }
+.dot-5 { background: #1e40af; }
+
+/* Criteria overview desc */
+.criteria-item .desc {
+  font-size: 0.8rem;
+  color: var(--text-muted);
+  margin-top: 0.25rem;
+}
+
+/* Top-3 Podium */
+.podium-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 1rem;
+  margin-bottom: 1.5rem;
+}
+
+.podium-card {
+  background: var(--bg-card);
+  border: 2px solid var(--border);
+  border-radius: var(--radius);
+  padding: 1.5rem 1.25rem;
+  text-align: center;
+  transition: transform 0.2s, box-shadow 0.2s;
+}
+
+.podium-card:hover {
+  transform: translateY(-2px);
+  box-shadow: var(--shadow-lg);
+}
+
+.podium-1 {
+  border-color: #f59e0b;
+  background: linear-gradient(180deg, #fffbeb 0%, var(--bg-card) 100%);
+}
+
+.podium-2 {
+  border-color: #94a3b8;
+  background: linear-gradient(180deg, #f8fafc 0%, var(--bg-card) 100%);
+}
+
+.podium-3 {
+  border-color: #cd7f32;
+  background: linear-gradient(180deg, #fdf2f0 0%, var(--bg-card) 100%);
+}
+
+.podium-medal {
+  font-size: 2.25rem;
+  margin-bottom: 0.25rem;
+}
+
+.podium-rank {
+  font-size: 0.75rem;
+  font-weight: 700;
+  color: var(--text-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  margin-bottom: 0.5rem;
+}
+
+.podium-name {
+  font-size: 1.15rem;
+  font-weight: 800;
+  color: var(--primary-dark);
+  margin-bottom: 0.25rem;
+}
+
+.podium-score {
+  font-size: 0.9rem;
+  color: var(--primary);
+  font-weight: 600;
+  margin-bottom: 0.75rem;
+}
+
+.podium-meta {
+  display: flex;
+  gap: 1.5rem;
+  justify-content: center;
+  list-style: none;
+  font-size: 0.85rem;
+  color: var(--text-muted);
+}
+
+.podium-meta li {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.15rem;
+}
+
+.podium-meta li span {
+  font-size: 0.75rem;
+}
+
+.podium-detail {
+  margin-top: 1rem;
+  border-top: 1px solid var(--border);
+  padding-top: 0.5rem;
+}
+
+.podium-detail summary {
+  cursor: pointer;
+  font-size: 0.82rem;
+  color: var(--primary);
+  font-weight: 600;
+}
+
+.inner-table {
+  width: 100%;
+  margin-top: 0.5rem;
+  font-size: 0.8rem;
+}
+
+.hero-foot {
+  font-size: 0.9rem;
+  opacity: 0.85;
+  margin-top: 0.5rem;
+}
+
+.status-top3 {
+  color: var(--primary);
+  font-weight: 700;
+  font-size: 0.8rem;
+}
+
+.top-row {
+  background: #f0f4ff;
+}
+
+.top-row td {
+  font-weight: 500;
+}

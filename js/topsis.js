@@ -17,8 +17,12 @@ function topsis(decisionMatrix, weights, criteriaTypes) {
     throw new Error('Matriks keputusan tidak boleh kosong.');
   }
 
+  // Normalisasi bobot agar total = 1 (bisa jadi tidak diperlukan bila input
+  // sudah dinormalisasi di sisi kuesioner, namun disertakan untuk keamanan).
   const normalizedWeights = normalizeWeights(weights);
 
+  // === Langkah 1 — Normalisasi Matriks Keputusan ===
+  // r_ij = x_ij / sqrt(Σ x_ij^2)  (vektor normalisasi per kolom)
   const normalized = Array.from({ length: m }, () => Array(n).fill(0));
   for (let j = 0; j < n; j++) {
     const sumSq = decisionMatrix.reduce((sum, row) => sum + row[j] * row[j], 0);
@@ -28,10 +32,14 @@ function topsis(decisionMatrix, weights, criteriaTypes) {
     }
   }
 
+  // === Langkah 2 — Matriks Normalisasi Terbobot ===
+  // y_ij = w_j * r_ij
   const weighted = normalized.map((row) =>
     row.map((val, j) => val * normalizedWeights[j])
   );
 
+  // === Langkah 3 — Solusi Ideal Positif (A+) & Negatif (A-) ===
+  // Benefit: A+ = max, A- = min.  Cost: A+ = min, A- = max.
   const idealPositive = [];
   const idealNegative = [];
   for (let j = 0; j < n; j++) {
@@ -45,6 +53,9 @@ function topsis(decisionMatrix, weights, criteriaTypes) {
     }
   }
 
+  // === Langkah 4 — Jarak ke Solusi Ideal (D+ dan D-) ===
+  // D_i+ = sqrt(Σ (A+_j - y_ij)^2)
+  // D_i- = sqrt(Σ (y_ij - A-_j)^2)
   const dPositive = [];
   const dNegative = [];
   for (let i = 0; i < m; i++) {
@@ -58,11 +69,14 @@ function topsis(decisionMatrix, weights, criteriaTypes) {
     dNegative[i] = Math.sqrt(sumNeg);
   }
 
+  // === Langkah 5 — Nilai Preferensi V_i = D_i- / (D_i+ + D_i-) ===
+  // Semakin mendekati 1, alternatif semakin dekat dengan solusi ideal.
   const preference = dPositive.map((dPos, i) => {
     const total = dPos + dNegative[i];
     return total === 0 ? 0 : dNegative[i] / total;
   });
 
+  // === Langkah 6 — Ranking berdasarkan V_i (descending) ===
   const ranking = preference
     .map((pref, i) => ({ index: i, preference: pref }))
     .sort((a, b) => b.preference - a.preference)

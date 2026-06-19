@@ -83,50 +83,29 @@
       </div>
     </section>
 
-    <!-- INPUT DATA -->
+    <!-- KUESIONER (PENGGANTI INPUT DATA) -->
     <section class="page" id="page-input">
       <div class="page-header">
-        <h2>Input Data</h2>
-        <p>Masukkan bobot kriteria dan nilai penilaian setiap alternatif UKM.</p>
+        <h2>Kuesioner Preferensi</h2>
+        <p>Seberapa penting kriteria berikut bagi Anda? Beri nilai 1 (Sangat Tidak Penting) sampai 5 (Sangat Penting).</p>
       </div>
 
-      <div class="card">
-        <div class="card-header-row">
-          <h3>Bobot Kriteria</h3>
-          <span class="weight-total" id="weightTotal">Total: 1.0000</span>
-        </div>
-        <div class="table-wrap">
-          <table class="data-table" id="weightTable">
-            <thead>
-              <tr>
-                <th>Kode</th>
-                <th>Kriteria</th>
-                <th>Tipe</th>
-                <th>Bobot</th>
-                <th>Deskripsi</th>
-              </tr>
-            </thead>
-            <tbody></tbody>
-          </table>
-        </div>
-      </div>
+      <div class="card questionnaire-card">
+        <form id="questionnaireForm" autocomplete="off">
+          <div class="likert-stack" id="likertStack"></div>
 
-      <div class="card">
-        <div class="card-header-row">
-          <h3>Matriks Keputusan</h3>
-          <button class="btn btn-sm btn-outline" id="btnReset">Reset ke Data Default</button>
-        </div>
-        <div class="table-wrap">
-          <table class="data-table" id="matrixTable">
-            <thead></thead>
-            <tbody></tbody>
-          </table>
-        </div>
-        <p class="hint">C1 & C2: skala Likert 1–5 | C3: jumlah anggota aktif | C4: jumlah prestasi | C5: frekuensi pertemuan/minggu (cost)</p>
-      </div>
+          <div class="legend">
+            <span class="legend-item"><span class="dot dot-1">1</span> Sangat Tidak Penting</span>
+            <span class="legend-item"><span class="dot dot-2">2</span> Tidak Penting</span>
+            <span class="legend-item"><span class="dot dot-3">3</span> Netral</span>
+            <span class="legend-item"><span class="dot dot-4">4</span> Penting</span>
+            <span class="legend-item"><span class="dot dot-5">5</span> Sangat Penting</span>
+          </div>
 
-      <div class="action-bar">
-        <button class="btn btn-primary btn-lg" id="btnCalculate">Hitung dengan TOPSIS</button>
+          <div class="action-bar">
+            <button type="button" class="btn btn-primary btn-lg" id="btnCalculate">Cari Rekomendasi</button>
+          </div>
+        </form>
       </div>
     </section>
 
@@ -178,6 +157,12 @@
             <p class="formula">V<sub>i</sub> = D<sub>i</sub>⁻ / (D<sub>i</sub>⁺ + D<sub>i</sub>⁻)</p>
             <div class="table-wrap" id="stepPreference"></div>
           </div>
+          <div class="step-card">
+            <span class="step-num">0</span>
+            <h3>Bobot Kriteria (Hasil Kuesioner)</h3>
+            <p class="formula">w<sub>j</sub> = input Likert / Σ input Likert (total = 1.00)</p>
+            <div class="table-wrap" id="stepWeights"></div>
+          </div>
         </div>
       </div>
     </section>
@@ -198,8 +183,13 @@
         <div class="result-hero" id="resultHero"></div>
 
         <div class="card">
+          <h3>Top 3 Rekomendasi UKM</h3>
+          <div class="podium-grid" id="top3Podium"></div>
+        </div>
+
+        <div class="card">
           <div class="card-header-row">
-            <h3>Ranking UKM</h3>
+            <h3>Ranking Lengkap</h3>
             <button class="btn btn-sm btn-outline" id="btnPrint">Cetak Laporan</button>
           </div>
           <div class="table-wrap">

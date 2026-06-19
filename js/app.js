@@ -1,5 +1,6 @@
 /**
  * SPK Rekomendasi UKM — Aplikasi Utama
+ * Alur: Kuesioner Likert 1-5 -> Normalisasi Bobot -> TOPSIS -> 3 Rekomendasi Teratas
  */
 
 let appState = {
@@ -12,7 +13,7 @@ document.addEventListener('DOMContentLoaded', () => {
   initNavigation();
   initBeranda();
   initTentang();
-  renderInputTables();
+  renderQuestionnaire();
   bindEvents();
 });
 
@@ -36,8 +37,10 @@ function navigateTo(pageId) {
   document.querySelectorAll('.page').forEach((p) => p.classList.remove('active'));
   document.querySelectorAll('.nav-btn').forEach((b) => b.classList.remove('active'));
 
-  document.getElementById(`page-${pageId}`).classList.add('active');
-  document.querySelector(`[data-page="${pageId}"]`)?.classList.add('active');
+  const target = document.getElementById(`page-${pageId}`);
+  if (target) target.classList.add('active');
+  const navBtn = document.querySelector(`[data-page="${pageId}"]`);
+  if (navBtn) navBtn.classList.add('active');
   document.getElementById('mainNav').classList.remove('open');
   window.scrollTo({ top: 0, behavior: 'smooth' });
 }
@@ -50,8 +53,8 @@ function initBeranda() {
       <div class="criteria-item">
         <div class="code">${c.id}</div>
         <div class="name">${c.name}</div>
-        <div class="weight">${(c.weight * 100).toFixed(0)}%</div>
         <div class="type">${c.type === 'benefit' ? 'Benefit' : 'Cost'}</div>
+        <div class="desc">${c.description}</div>
       </div>`
     )
     .join('');
@@ -67,102 +70,104 @@ function initTentang() {
     .join('');
 }
 
-function renderInputTables() {
-  renderWeightTable();
-  renderMatrixTable();
-  updateWeightTotal();
-}
+/**
+ * Render form kuesioner Likert 1-5 untuk setiap kriteria.
+ * Pengguna cukup memilih satu angka per kriteria (radio button).
+ */
+function renderQuestionnaire() {
+  const stack = document.getElementById('likertStack');
+  if (!stack) return;
 
-function renderWeightTable() {
-  const tbody = document.querySelector('#weightTable tbody');
-  tbody.innerHTML = appState.criteria
-    .map(
-      (c, i) => `
-      <tr>
-        <td><strong>${c.id}</strong></td>
-        <td>${c.name}</td>
-        <td><span class="type-badge ${c.type}">${c.type}</span></td>
-        <td>
-          <input type="number" min="0" max="1" step="0.01"
-            value="${c.weight}" data-weight-index="${i}" class="weight-input">
-        </td>
-        <td style="color:var(--text-muted);font-size:0.8rem">${c.description}</td>
-      </tr>`
-    )
+  stack.innerHTML = appState.criteria
+    .map((c, i) => {
+      const options = [1, 2, 3, 4, 5]
+        .map(
+          (v) => `
+          <label class="likert-option">
+            <input type="radio" name="crit-${i}" value="${v}" required>
+            <span class="likert-bubble">${v}</span>
+          </label>`
+        )
+        .join('');
+
+      return `
+        <div class="likert-row" data-crit-index="${i}">
+          <div class="likert-info">
+            <span class="likert-code">${c.id}</span>
+            <div>
+              <div class="likert-name">${c.name}</div>
+              <div class="likert-desc">${c.description}</div>
+            </div>
+            <span class="type-badge ${c.type}">${c.type}</span>
+          </div>
+          <div class="likert-scale">${options}</div>
+        </div>`;
+    })
     .join('');
+
+  stack.querySelectorAll('.likert-option input[type="radio"]').forEach((radio) => {
+    radio.addEventListener('change', () => {
+      radio.closest('.likert-row').classList.add('answered');
+    });
+  });
 }
 
-function renderMatrixTable() {
-  const thead = document.querySelector('#matrixTable thead');
-  const tbody = document.querySelector('#matrixTable tbody');
-
-  const headerCells = appState.criteria.map((c) => `<th>${c.id}<br><small>${c.name}</small></th>`).join('');
-  thead.innerHTML = `<tr><th>No</th><th>Alternatif UKM</th>${headerCells}</tr>`;
-
-  tbody.innerHTML = appState.alternatives
-    .map(
-      (alt, i) => `
-      <tr>
-        <td>${i + 1}</td>
-        <td><strong>${alt.name}</strong></td>
-        ${alt.values
-          .map(
-            (val, j) => `
-          <td>
-            <input type="number" min="0" step="any"
-              value="${val}" data-alt-index="${i}" data-crit-index="${j}" class="matrix-input">
-          </td>`
-          )
-          .join('')}
-      </tr>`
-    )
-    .join('');
-}
-
-function updateWeightTotal() {
-  const total = appState.criteria.reduce((sum, c) => sum + c.weight, 0);
-  const el = document.getElementById('weightTotal');
-  el.textContent = `Total: ${formatNumber(total, 4)}`;
-  el.classList.toggle('invalid', Math.abs(total - 1) > 0.01);
+/**
+ * Kumpulkan nilai Likert dari form lalu ubah menjadi bobot ternormalisasi
+ * (total = 1.0). Inilah bobot yang dipakai pada perhitungan TOPSIS.
+ */
+function collectWeightsFromForm() {
+  const weights = [];
+  for (let i = 0; i < appState.criteria.length; i++) {
+    const checked = document.querySelector(`input[name="crit-${i}"]:checked`);
+    if (!checked) {
+      throw new Error(`Mohon isi nilai untuk kriteria ${appState.criteria[i].id} (${appState.criteria[i].name}).`);
+    }
+    weights.push(parseInt(checked.value, 10));
+  }
+  const total = weights.reduce((a, b) => a + b, 0);
+  if (total === 0) throw new Error('Total nilai kuesioner tidak boleh nol.');
+  return weights.map((w) => w / total);
 }
 
 function bindEvents() {
-  document.getElementById('weightTable').addEventListener('input', (e) => {
-    if (!e.target.classList.contains('weight-input')) return;
-    const idx = parseInt(e.target.dataset.weightIndex, 10);
-    appState.criteria[idx].weight = parseFloat(e.target.value) || 0;
-    updateWeightTotal();
-  });
-
-  document.getElementById('matrixTable').addEventListener('input', (e) => {
-    if (!e.target.classList.contains('matrix-input')) return;
-    const altIdx = parseInt(e.target.dataset.altIndex, 10);
-    const critIdx = parseInt(e.target.dataset.critIndex, 10);
-    appState.alternatives[altIdx].values[critIdx] = parseFloat(e.target.value) || 0;
-  });
-
-  document.getElementById('btnReset').addEventListener('click', () => {
-    appState.criteria = structuredClone(DEFAULT_DATA.criteria);
-    appState.alternatives = structuredClone(DEFAULT_DATA.alternatives);
-    appState.result = null;
-    renderInputTables();
-    hideResults();
-  });
-
   document.getElementById('btnCalculate').addEventListener('click', calculate);
   document.getElementById('btnPrint').addEventListener('click', () => window.print());
 }
 
+/**
+ * Hitung TOPSIS menggunakan bobot ternormalisasi dari kuesioner,
+ * matriks keputusan hardcoded (DEFAULT_DATA.alternatives), dan tipe kriteria.
+ */
 function calculate() {
-  const weights = appState.criteria.map((c) => c.weight);
+  let weights;
+  try {
+    weights = collectWeightsFromForm();
+  } catch (err) {
+    alert(err.message);
+    return;
+  }
+
   const types = appState.criteria.map((c) => c.type);
   const matrix = appState.alternatives.map((a) => [...a.values]);
   const names = appState.alternatives.map((a) => a.name);
   const critLabels = appState.criteria.map((c) => c.id);
+  const critNames = appState.criteria.map((c) => c.name);
 
   try {
     const result = topsis(matrix, weights, types);
-    appState.result = { ...result, names, critLabels };
+    appState.result = {
+      ...result,
+      names,
+      critLabels,
+      critNames,
+      rawWeights: weights.map((w, i) => ({
+        id: critLabels[i],
+        name: critNames[i],
+        raw: Math.round(w * weights.reduce((a, b) => a + b, 0) * 100) / 100,
+        normalized: w
+      }))
+    };
     renderCalculation();
     renderResults();
     navigateTo('hasil');
@@ -209,14 +214,17 @@ function renderCalculation() {
 
   const matrix = appState.alternatives.map((a) => [...a.values]);
 
+  // Step 1: Matriks Keputusan (X)
   document.getElementById('stepMatrix').innerHTML = buildMatrixTable(
     matrix, r.names, r.critLabels
   );
 
+  // Step 2: Normalisasi Matriks Keputusan
   document.getElementById('stepNormalized').innerHTML = buildMatrixTable(
     r.normalized, r.names, r.critLabels
   );
 
+  // Step 3: Matriks Normalisasi Terbobot (y_ij = w_j * r_ij)
   const weightedRows = r.weighted
     .map(
       (row, i) => `
@@ -238,6 +246,7 @@ function renderCalculation() {
       <tbody>${weightedRows}</tbody>
     </table>`;
 
+  // Step 4: Solusi Ideal Positif (A+) & Negatif (A-)
   document.getElementById('stepIdeal').innerHTML = `
     <table class="data-table">
       <thead>
@@ -258,6 +267,7 @@ function renderCalculation() {
       </tbody>
     </table>`;
 
+  // Step 5: Jarak ke Solusi Ideal (D+, D-)
   const distRows = r.names
     .map(
       (name, i) => `
@@ -278,6 +288,7 @@ function renderCalculation() {
       <tbody>${distRows}</tbody>
     </table>`;
 
+  // Step 6: Nilai Preferensi & Ranking
   const prefRows = r.ranking
     .map((item) => {
       const name = r.names[item.index];
@@ -297,8 +308,31 @@ function renderCalculation() {
       </thead>
       <tbody>${prefRows}</tbody>
     </table>`;
+
+  // Bobot hasil normalisasi dari input kuesioner
+  const weightRows = r.normalizedWeights
+    .map(
+      (w, j) => `
+      <tr>
+        <td><strong>${r.critLabels[j]}</strong></td>
+        <td>${r.critNames[j]}</td>
+        <td>${r.rawWeights[j].raw}</td>
+        <td>${formatNumber(w, 4)}</td>
+      </tr>`
+    )
+    .join('');
+  document.getElementById('stepWeights').innerHTML = `
+    <table class="data-table">
+      <thead>
+        <tr><th>Kode</th><th>Kriteria</th><th>Input Likert</th><th>Bobot Ternormalisasi (w_j)</th></tr>
+      </thead>
+      <tbody>${weightRows}</tbody>
+    </table>`;
 }
 
+/**
+ * Render halaman hasil: fokus pada TOP-3 rekomendasi UKM.
+ */
 function renderResults() {
   const r = appState.result;
   if (!r) return;
@@ -306,15 +340,18 @@ function renderResults() {
   document.getElementById('resultEmpty').classList.add('hidden');
   document.getElementById('resultContent').classList.remove('hidden');
 
-  const winner = r.ranking[0];
+  const top3 = r.ranking.slice(0, 3);
+  const winner = top3[0];
   const winnerName = r.names[winner.index];
 
   document.getElementById('resultHero').innerHTML = `
     <div class="trophy">🏆</div>
-    <h3>Rekomendasi Utama</h3>
+    <h3>Rekomendasi UKM Terbaik Untuk Anda</h3>
     <div class="winner">${winnerName}</div>
-    <div class="score">Nilai Preferensi: ${formatNumber(winner.preference)}</div>`;
+    <div class="score">Nilai Preferensi: ${formatNumber(winner.preference)}</div>
+    <p class="hero-foot">Dihasilkan dari 6 UKM yang dianalisis menggunakan Metode TOPSIS berdasarkan preferensi Anda.</p>`;
 
+  // Tabel ranking lengkap (tetap menampilkan semua UKM agar transparan)
   const tbody = document.querySelector('#resultTable tbody');
   tbody.innerHTML = r.ranking
     .map((item) => {
@@ -322,11 +359,13 @@ function renderResults() {
       const rankClass = item.rank <= 3 ? `rank-${item.rank}` : 'rank-other';
       const status =
         item.rank === 1
-          ? '<span class="status-recommended">★ Direkomendasikan</span>'
+          ? '<span class="status-recommended">★ Rekomendasi #1</span>'
+          : item.rank <= 3
+          ? '<span class="status-top3">Top 3</span>'
           : '<span class="status-normal">Alternatif</span>';
 
       return `
-        <tr>
+        <tr class="${item.rank <= 3 ? 'top-row' : ''}">
           <td><span class="rank-badge ${rankClass}">${item.rank}</span></td>
           <td><strong>${name}</strong></td>
           <td><strong>${formatNumber(item.preference)}</strong></td>
@@ -337,34 +376,63 @@ function renderResults() {
     })
     .join('');
 
-  const rankingText = r.ranking
+  // Kartu Top-3 menonjol
+  const podium = document.getElementById('top3Podium');
+  podium.innerHTML = top3
     .map((item, idx) => {
       const name = r.names[item.index];
-      return `${idx + 1}. ${name} (${formatNumber(item.preference)})`;
+      const medals = ['🥇', '🥈', '🥉'];
+      const alt = appState.alternatives[item.index];
+      return `
+        <article class="podium-card podium-${item.rank}">
+          <div class="podium-medal">${medals[idx]}</div>
+          <div class="podium-rank">Rekomendasi #${item.rank}</div>
+          <h3 class="podium-name">${name}</h3>
+          <div class="podium-score">V = ${formatNumber(item.preference)}</div>
+          <ul class="podium-meta">
+            <li><span>D⁺</span><strong>${formatNumber(r.dPositive[item.index])}</strong></li>
+            <li><span>D⁻</span><strong>${formatNumber(r.dNegative[item.index])}</strong></li>
+          </ul>
+          <details class="podium-detail">
+            <summary>Lihat nilai kriteria</summary>
+            <table class="data-table inner-table">
+              <thead><tr>${r.critLabels.map((c) => `<th>${c}</th>`).join('')}</tr></thead>
+              <tbody><tr>${alt.values.map((v) => `<td>${v}</td>`).join('')}</tr></tbody>
+            </table>
+          </details>
+        </article>`;
     })
-    .join(', ');
+    .join('');
+
+  // Laporan naratif (fokus Top-3)
+  const top3Text = top3
+    .map((item, idx) => {
+      const name = r.names[item.index];
+      return `${idx + 1}. <strong>${name}</strong> (V = ${formatNumber(item.preference)})`;
+    })
+    .join('<br>');
 
   document.getElementById('reportText').innerHTML = `
     <p>
       <strong>Laporan Analisis Keputusan — Rekomendasi UKM Fakultas Teknik Unsoed</strong>
     </p>
     <p>
-      Berdasarkan perhitungan metode TOPSIS dengan ${appState.criteria.length} kriteria
-      (${appState.criteria.map((c) => c.name).join(', ')}) dan ${appState.alternatives.length} alternatif UKM,
-      sistem menghasilkan peringkat rekomendasi sebagai berikut:
+      Berdasarkan jawaban kuesioner Anda, sistem menormalisasi nilai 1–5 menjadi bobot kriteria
+      (total = 1.00), lalu menjalankan metode TOPSIS terhadap 6 alternatif UKM. Hasilnya,
+      <strong>tiga rekomendasi teratas</strong> untuk Anda adalah:
     </p>
-    <p><strong>${rankingText}</strong></p>
+    <p>${top3Text}</p>
     <p>
-      <strong>${winnerName}</strong> direkomendasikan sebagai pilihan utama dengan nilai preferensi
-      <strong>${formatNumber(winner.preference)}</strong>. Alternatif ini memiliki jarak terkecil terhadap
-      solusi ideal positif (D⁺ = ${formatNumber(r.dPositive[winner.index])}) dan jarak terbesar terhadap
-      solusi ideal negatif (D⁻ = ${formatNumber(r.dNegative[winner.index])}), yang menunjukkan kedekatan
-      tertinggi terhadap kondisi ideal pada seluruh kriteria.
+      <strong>${winnerName}</strong> menjadi rekomendasi utama dengan nilai preferensi
+      <strong>${formatNumber(winner.preference)}</strong>. Alternatif ini memiliki jarak
+      terdekat ke solusi ideal positif (D⁺ = ${formatNumber(r.dPositive[winner.index])}) dan
+      jarak terjauh dari solusi ideal negatif (D⁻ = ${formatNumber(r.dNegative[winner.index])}) —
+      artinya paling mendekati kondisi ideal sesuai bobot preferensi Anda.
     </p>
     <p>
-      Kriteria dengan bobot tertinggi adalah Pengembangan Diri (${(appState.criteria[0].weight * 100).toFixed(0)}%)
-      dan Peminatan (${(appState.criteria[1].weight * 100).toFixed(0)}%), sehingga UKM yang unggul pada kedua
-      aspek tersebut cenderung mendapat peringkat lebih tinggi dalam rekomendasi sistem.
+      Bobot kriteria yang digunakan: ${r.rawWeights
+        .map((w) => `${w.id} (${w.raw}/total = ${formatNumber(w.normalized, 2)})`)
+        .join(', ')}.
     </p>
     <p style="font-size:0.85rem;color:var(--text-muted)">
       Dihasilkan oleh SPK Rekomendasi UKM — Metode TOPSIS | ${new Date().toLocaleDateString('id-ID', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' })}

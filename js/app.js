@@ -53,7 +53,6 @@ function initBeranda() {
       <div class="criteria-item">
         <div class="code">${c.id}</div>
         <div class="name">${c.name}</div>
-        <div class="type">${c.type === 'benefit' ? 'Benefit' : 'Cost'}</div>
         <div class="desc">${c.description}</div>
       </div>`
     )
@@ -98,7 +97,6 @@ function renderQuestionnaire() {
               <div class="likert-name">${c.name}</div>
               <div class="likert-desc">${c.description}</div>
             </div>
-            <span class="type-badge ${c.type}">${c.type}</span>
           </div>
           <div class="likert-scale">${options}</div>
         </div>`;

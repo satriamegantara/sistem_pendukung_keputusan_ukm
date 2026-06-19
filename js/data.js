@@ -18,14 +18,14 @@ const DEFAULT_DATA = {
       name: 'Pengembangan Diri',
       type: 'benefit',
       weight: 0.30,
-      description: 'Manfaat pengembangan diri yang diperoleh mahasiswa (skala Likert 1–5)'
+      description: 'Manfaat pengembangan diri yang diperoleh mahasiswa'
     },
     {
       id: 'C2',
       name: 'Peminatan',
       type: 'benefit',
       weight: 0.25,
-      description: 'Kesesuaian UKM dengan minat mahasiswa (skala Likert 1–5)'
+      description: 'Kesesuaian UKM dengan minat mahasiswa'
     },
     {
       id: 'C3',

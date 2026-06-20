@@ -678,12 +678,21 @@ body {
 
 /* Print */
 @media print {
-  .header, .footer, .nav, .hero-actions, .action-bar, .btn, .empty-state {
+  .header, .footer, .nav, .hero-actions, .action-bar, .btn, .empty-state,
+  #page-beranda, #page-input, #page-perhitungan, #page-tentang {
     display: none !important;
   }
 
-  .page {
+  #page-hasil {
     display: block !important;
+  }
+
+  #resultContent {
+    display: block !important;
+  }
+
+  #resultEmpty {
+    display: none !important;
   }
 
   body {
